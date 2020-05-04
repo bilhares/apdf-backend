@@ -27,10 +27,14 @@ public class PdfResource {
 	public PdfDto paginatePdf(@RequestBody PdfDto dto) {
 		return controller.paginatePdf(dto);
 	}
-	
-	//add codebar
-	//split
-	//assinar
-	
+
+	// add codebar
+	// split
+	@PostMapping("/split-pdf")
+	public void splitPdf(@RequestBody PdfDto dto) {
+		controller.splitPdf(dto);
+	}
+
+	// assinar
 
 }

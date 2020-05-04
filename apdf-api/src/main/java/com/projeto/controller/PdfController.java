@@ -3,8 +3,14 @@ package com.projeto.controller;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Controller;
@@ -13,6 +19,8 @@ import com.itextpdf.forms.PdfPageFormCopier;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.utils.PageRange;
+import com.itextpdf.kernel.utils.PdfSplitter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.property.TextAlignment;
@@ -51,7 +59,7 @@ public class PdfController {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		return new PdfDto();
 	}
 
@@ -79,5 +87,69 @@ public class PdfController {
 		}
 
 		return new PdfDto();
+	}
+
+	public void splitPdf(PdfDto dto) {
+
+		List<byte[]> parts = new ArrayList<byte[]>();
+		try {
+			ByteArrayInputStream bis = new ByteArrayInputStream(dto.getFile());
+			PdfDocument pdfDoc = new PdfDocument(new PdfReader(bis));
+
+			List<PdfDocument> splitDocuments = new PdfSplitter(pdfDoc) {
+				int partNumber = 1;
+
+				@Override
+				protected PdfWriter getNextPdfWriter(PageRange documentPageRange) {
+					try {
+						return new PdfWriter(String.format("temp/splitDocument1_%s.pdf", partNumber++));
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				}
+			}.splitByPageCount(1);
+
+			for (PdfDocument doc : splitDocuments) {
+				doc.close();
+			}
+
+			pdfDoc.close();
+
+			File f = new File("temp/test.zip");
+			ZipOutputStream out = new ZipOutputStream(new FileOutputStream(f));
+			int cont = 1;
+
+			File folder = new File("temp");
+			File[] listOfFiles = folder.listFiles();
+
+			for (File file : listOfFiles) {
+				if (file.toString().contains("splitDocument")) {
+					ZipEntry e = new ZipEntry("split_" + cont + ".pdf");
+					out.putNextEntry(e);
+					Path pdfPath = Paths.get(file.getPath());
+					byte[] data = Files.readAllBytes(pdfPath);
+//					byte[] data = a;
+					out.write(data, 0, data.length);
+					out.closeEntry();
+					cont++;
+				}
+			}
+
+//			for (byte[] a : parts) {
+//				ZipEntry e = new ZipEntry("split_" + cont + ".pdf");
+//				out.putNextEntry(e);
+////				Path pdfPath = Paths.get("split_1.pdf");
+////				byte[] data = Files.readAllBytes(pdfPath);
+//				byte[] data = a;
+//				out.write(data, 0, data.length);
+//				out.closeEntry();
+//				cont++;
+//			}
+
+			out.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
