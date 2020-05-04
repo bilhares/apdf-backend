@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -89,9 +90,13 @@ public class PdfController {
 		return new PdfDto();
 	}
 
-	public void splitPdf(PdfDto dto) {
+	public PdfDto splitPdf(PdfDto dto) {
 
-		List<byte[]> parts = new ArrayList<byte[]>();
+		File folder = new File("temp");
+		if (!folder.exists()) {
+			folder.mkdir();
+		}
+
 		try {
 			ByteArrayInputStream bis = new ByteArrayInputStream(dto.getFile());
 			PdfDocument pdfDoc = new PdfDocument(new PdfReader(bis));
@@ -102,11 +107,16 @@ public class PdfController {
 				@Override
 				protected PdfWriter getNextPdfWriter(PageRange documentPageRange) {
 					try {
-						return new PdfWriter(String.format("temp/splitDocument1_%s.pdf", partNumber++));
+						return new PdfWriter(String.format("temp/splitDocument1_" + getId() + "_%s.pdf", partNumber++));
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
 				}
+
+				public int getId() {
+					return new Random().nextInt((30000 - 10000) + 1) + 10000;
+				}
+
 			}.splitByPageCount(1);
 
 			for (PdfDocument doc : splitDocuments) {
@@ -115,11 +125,10 @@ public class PdfController {
 
 			pdfDoc.close();
 
-			File f = new File("temp/test.zip");
-			ZipOutputStream out = new ZipOutputStream(new FileOutputStream(f));
+			ByteArrayOutputStream bout = new ByteArrayOutputStream();
+			ZipOutputStream out = new ZipOutputStream(bout);
 			int cont = 1;
 
-			File folder = new File("temp");
 			File[] listOfFiles = folder.listFiles();
 
 			for (File file : listOfFiles) {
@@ -128,28 +137,20 @@ public class PdfController {
 					out.putNextEntry(e);
 					Path pdfPath = Paths.get(file.getPath());
 					byte[] data = Files.readAllBytes(pdfPath);
-//					byte[] data = a;
 					out.write(data, 0, data.length);
 					out.closeEntry();
+					file.delete();
 					cont++;
 				}
 			}
 
-//			for (byte[] a : parts) {
-//				ZipEntry e = new ZipEntry("split_" + cont + ".pdf");
-//				out.putNextEntry(e);
-////				Path pdfPath = Paths.get("split_1.pdf");
-////				byte[] data = Files.readAllBytes(pdfPath);
-//				byte[] data = a;
-//				out.write(data, 0, data.length);
-//				out.closeEntry();
-//				cont++;
-//			}
-
 			out.close();
+			return new PdfDto(bout.toByteArray());
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		return null;
 	}
 }

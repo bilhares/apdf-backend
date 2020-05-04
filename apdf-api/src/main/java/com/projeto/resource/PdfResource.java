@@ -31,8 +31,8 @@ public class PdfResource {
 	// add codebar
 	// split
 	@PostMapping("/split-pdf")
-	public void splitPdf(@RequestBody PdfDto dto) {
-		controller.splitPdf(dto);
+	public PdfDto splitPdf(@RequestBody PdfDto dto) {
+		return controller.splitPdf(dto);
 	}
 
 	// assinar
