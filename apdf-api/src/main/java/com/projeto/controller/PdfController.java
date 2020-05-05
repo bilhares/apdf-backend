@@ -54,7 +54,7 @@ public class PdfController {
 			pdfDoc.close();
 
 			byte[] retorno = dest.toByteArray();
-			FileUtils.writeByteArrayToFile(new File("c://temp//teste.pdf"), retorno);
+//			FileUtils.writeByteArrayToFile(new File("c://temp//teste.pdf"), retorno);
 			return new PdfDto(retorno);
 
 		} catch (Exception e) {
@@ -78,7 +78,7 @@ public class PdfController {
 			int numberOfPages = pdfDoc.getNumberOfPages();
 			for (int i = 1; i <= numberOfPages; i++) {
 
-				doc.showTextAligned(new Paragraph(String.format("page %s of %s", i, numberOfPages)), 559, 806, i,
+				doc.showTextAligned(new Paragraph(String.format("page %s of %s", i, numberOfPages)), 559, 50, i,
 						TextAlignment.RIGHT, VerticalAlignment.BOTTOM, 0);
 			}
 			doc.close();
